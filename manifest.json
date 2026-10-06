@@ -1,0 +1,20 @@
+{
+  "name": "Pengingat Rawatan Burung Pro",
+  "short_name": "Burung Pro",
+  "start_url": "./pengingat_burung_master.html",
+  "display": "standalone",
+  "background_color": "#121824",
+  "theme_color": "#1b4332",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3069/3069172.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3069/3069172.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

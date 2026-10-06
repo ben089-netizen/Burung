@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rawatan Burung Pro - Pengingat & Checklist Custom</title>
+  
+  <!-- Link Manifest PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1b4332">
+
+  <style>
+    :root {
+      --bg: #121824;
+      --card-bg: #1e2738;
+      --card-border: #2d3b52;
+      --primary: #2e7d32;
+      --primary-accent: #4caf50;
+      --active-bg: #1b382b;
+      --active-border: #81c784;
+      --text: #f0f4f8;
+      --muted: #8a99ad;
+      --warning: #ff9800;
+      --danger: #ef5350;
+      --info: #0288d1;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 12px;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .header-card {
+      background: linear-gradient(135deg, #1b4332 0%, #081c15 100%);
+      border: 1px solid var(--primary-accent);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+
+    .date-display { font-size: 0.9rem; color: #a3e635; font-weight: 700; text-transform: uppercase; }
+    .clock-display { font-size: 2.4rem; font-weight: 800; letter-spacing: 1px; margin: 4px 0; color: #ffffff; }
+    .day-status { font-size: 0.85rem; color: #e2e8f0; margin-top: 4px; }
+
+    #btnStopAlarm {
+      display: none;
+      width: 100%;
+      padding: 14px;
+      background: #e53935;
+      color: white;
+      font-weight: 800;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 0 18px rgba(229, 57, 53, 0.8);
+      animation: pulse 1s infinite alternate;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.98); opacity: 0.9; }
+      100% { transform: scale(1.02); opacity: 1; }
+    }
+
+    .control-btn-group { display: flex; gap: 8px; }
+
+    .btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: opacity 0.2s;
+    }
+
+    .btn:active { opacity: 0.8; }
+    .btn-primary { background: var(--primary-accent); color: #fff; }
+    .btn-warning { background: var(--warning); color: #111; }
+    .btn-secondary { background: #334155; color: #fff; }
+    .btn:disabled { background: #475569; cursor: default; }
+
+    .nav-tabs {
+      display: flex;
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 4px;
+      border: 1px solid var(--card-border);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 8px;
+      text-align: center;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .tab-btn.active { background: var(--primary); color: #fff; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .card.active-schedule {
+      background: var(--active-bg);
+      border-color: var(--active-border);
+      box-shadow: 0 0 12px rgba(76, 175, 80, 0.3);
+    }
+
+    .card.disabled-card {
+      opacity: 0.5;
+      border-color: #334155;
+      background: #161e2e;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .badge {
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 10px;
+      background: #334155;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .card.active-schedule .badge { background: var(--primary-accent); color: #fff; }
+    .badge-mandi { background: #0288d1; color: #fff; }
+    .card-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.4; }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.03);
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+
+    .check-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary-accent);
+    }
+
+    .check-item.done { text-decoration: line-through; color: var(--muted); }
+
+    .note-input {
+      width: 100%;
+      height: 70px;
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      color: #fff;
+      padding: 8px;
+      font-size: 0.85rem;
+      resize: none;
+      margin-bottom: 8px;
+    }
+
+    .log-list {
+      max-height: 180px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .log-item {
+      background: rgba(255,255,255,0.03);
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      border-left: 3px solid var(--primary-accent);
+    }
+
+    .log-date { font-weight: bold; color: var(--primary-accent); font-size: 0.75rem; }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  <div class="header-card">
+    <div class="date-display" id="dateDisplay">-- ------ ----</div>
+    <div class="clock-display" id="clockDisplay">00:00:00</div>
+    <div class="day-status" id="dayStatus">Status Hari Ini: -</div>
+  </div>
+
+  <button id="btnStopAlarm" onclick="stopAlarm()">🔕 MATIKAN ALARM / GETAR (1 MIN)</button>
+
+  <div class="control-btn-group">
+    <button class="btn btn-primary" id="btnNotif" onclick="requestNotifPermission()">
+      🔔 Aktifkan Notifikasi
+    </button>
+    <button class="btn btn-warning" onclick="testAlarmAndVibrate()">
+      📳 Tes Getar & Alarm
+    </button>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('tabJadwal')">⏱️ Timeline</button>
+    <button class="tab-btn" onclick="switchTab('tabChecklist')">☑️ Checklist</button>
+    <button class="tab-btn" onclick="switchTab('tabTerapi')">📻 Terapi Air</button>
+    <button class="tab-btn" onclick="switchTab('tabCatatan')">📝 Catatan Log</button>
+  </div>
+
+  <div id="tabJadwal" class="tab-content active">
+    <div class="card" id="cardEmbun">
+      <div class="card-title">
+        <span>🌌 Pengembunan Subuh</span>
+        <span class="badge" id="badgeEmbun">05:00 - 05:15</span>
+      </div>
+      <div class="card-desc">Keluarkan burung untuk proses pengembunan subuh di tempat terbuka.</div>
+    </div>
+
+    <div class="card" id="cardEFPagi">
+      <div class="card-title">
+        <span>🦗 EF Pagi (9 Jangkrik) <span id="mandiBadgeTag"></span></span>
+        <span class="badge" id="badgeEFPagi">05:15 - 05:30</span>
+      </div>
+      <div class="card-desc" id="descEFPagi">Beri <strong>9 ekor jangkrik pagi</strong> & ganti air bersih.</div>
+    </div>
+
+    <div class="card" id="cardJemur">
+      <div class="card-title">
+        <span>☀️ Penjemuran Pagi</span>
+        <span class="badge" id="badgeJemur">05:30 - 06:00</span>
+      </div>
+      <div class="card-desc">Jemur burung di bawah sinar matahari pagi secara bertahap.</div>
+    </div>
+
+    <div class="card" id="cardKrodongPagi">
+      <div class="card-title">
+        <span>🛡️️ Pengerodongan Pagi</span>
+        <span class="badge" id="badgeKrodongPagi">06:00 WIB</span>
+      </div>
+      <div class="card-desc" id="descKrodongPagi">Angin-anginkan sebentar lalu masukkan krodong untuk istirahat/pemasteran.</div>
+    </div>
+
+    <div class="card" id="cardEFSore">
+      <div class="card-title">
+        <span>🌇 EF Sore (9 Jangkrik) & Krodong</span>
+        <span class="badge" id="badgeEFSore">15:30 - 16:30</span>
+      </div>
+      <div class="card-desc">Beri <strong>9 ekor jangkrik sore</strong>, bersihkan karpet sangkar, lalu krodong.</div>
+    </div>
+
+    <div class="card" id="cardKroto">
+      <div class="card-title">
+        <span>🥣 Kroto Mingguan (1x Seminggu)</span>
+        <span class="badge" id="badgeKroto">Mingguan</span>
+      </div>
+      <div class="card-desc">Beri 1 sendok makan kroto segar sebagai tambahan gizi mingguan.</div>
+    </div>
+
+    <div class="card" id="cardMasteran">
+      <div class="card-title">
+        <span>📻 Ganti Masteran Bulanan</span>
+        <span class="badge" id="badgeMasteran">Setiap Tgl 6</span>
+      </div>
+      <div class="card-desc">Evaluasi materi isian dan ganti variasi suara masteran burung.</div>
+    </div>
+  </div>
+
+  <div id="tabChecklist" class="tab-content">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <span style="font-weight:bold; font-size:0.95rem;">☑️ Checklist Rawatan Hari Ini</span>
+        <button class="btn btn-secondary" style="font-size:0.75rem; padding:4px 8px;" onclick="resetChecklist()">Reset Harian</button>
+      </div>
+      <div id="checklistGroup"></div>
+    </div>
+  </div>
+
+  <div id="tabTerapi" class="tab-content">
+    <div class="card">
+      <div class="card-title">📻 Pemutar Terapi Gemericik Air</div>
+      <div class="card-desc" style="margin-bottom:10px;">Gunakan suara terapi air kencang untuk memancing burung bunyi.</div>
+      <select id="audioSelect" onchange="loadAudio()" style="width:100%; padding:8px; border-radius:8px; background:#0f172a; border:1px solid var(--card-border); color:#fff;">
+        <option value="https://www.soundjay.com/nature/sounds/river-1.mp3">🏞️ Terapi Gemericik Air Sungai</option>
+        <option value="https://www.soundjay.com/nature/sounds/rain-01.mp3">🌧️ Terapi Suara Hujan & Gemericik</option>
+      </select>
+      <audio id="masteranPlayer" controls style="width:100%; margin-top:10px;"></audio>
+    </div>
+  </div>
+
+  <div id="tabCatatan" class="tab-content">
+    <div class="card">
+      <div class="card-title">📝 Tambah Catatan Rawatan / Masteran</div>
+      <textarea class="note-input" id="noteInput" placeholder="Contoh: Tanggal 6 Ganti Masteran Suara Cililin..."></textarea>
+      <button class="btn btn-primary" style="width:100%" onclick="saveNote()">Simpan Catatan</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 Riwayat Catatan</div>
+      <div class="log-list" id="logList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Registrasi Service Worker PWA
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('PWA Service Worker terdaftar!', reg))
+        .catch(err => console.error('Gagal daftar SW:', err));
+    });
+  }
+
+  let vibrationTimer = null;
+  let notifEmbunSent = false;
+  let notifEFPagiSent = false;
+  let notifJemurSent = false;
+  let notifKrodongPagiSent = false;
+  let notifEFSoreSent = false;
+  let notifMasteranSent = false;
+
+  function playAlarmChime() {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const playNote = (freq, start, duration) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.3, ctx.currentTime + start);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + start);
+        osc.stop(ctx.currentTime + start + duration);
+      };
+      playNote(523.25, 0, 0.2);
+      playNote(659.25, 0.15, 0.2);
+      playNote(783.99, 0.3, 0.2);
+      playNote(1046.50, 0.45, 0.4);
+    } catch (e) {}
+  }
+
+  function triggerShortVibration() {
+    if ("vibrate" in navigator) navigator.vibrate([500, 200, 500, 200, 800]);
+  }
+
+  function start1MinVibration() {
+    if (!("vibrate" in navigator)) return;
+    stopAlarm();
+    const startTime = Date.now();
+    document.getElementById('btnStopAlarm').style.display = 'block';
+    vibrationTimer = setInterval(() => {
+      if (Date.now() - startTime >= 60000) {
+        stopAlarm();
+      } else {
+        navigator.vibrate([1500, 500]);
+      }
+    }, 2000);
+  }
+
+  function stopAlarm() {
+    if (vibrationTimer) { clearInterval(vibrationTimer); vibrationTimer = null; }
+    if ("vibrate" in navigator) navigator.vibrate(0);
+    document.getElementById('btnStopAlarm').style.display = 'none';
+  }
+
+  function updateClockAndSchedules() {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const day = now.getDate();
+    const dayOfWeek = now.getDay();
+    const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+    const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+
+    document.getElementById('clockDisplay').innerText = `${hours}:${minutes}:${seconds}`;
+    document.getElementById('dateDisplay').innerText = `${dayNames[dayOfWeek]}, ${day} ${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+
+    const isMandiDay = (dayOfWeek === 3 || dayOfWeek === 5);
+    const dayStatusEl = document.getElementById('dayStatus');
+    if (isMandiDay) {
+      dayStatusEl.innerHTML = `💧 <strong>HARI INI JADWAL MANDI PAGI (${dayNames[dayOfWeek]})</strong>`;
+      dayStatusEl.style.color = "#38bdf8";
+    } else {
+      dayStatusEl.innerText = `Status Hari Ini: Rawatan Reguler (${dayNames[dayOfWeek]})`;
+      dayStatusEl.style.color = "#e2e8f0";
+    }
+
+    const currentMins = now.getHours() * 60 + now.getMinutes();
+
+    // 1. Pengembunan (05:00)
+    const isEmbun = currentMins >= 300 && currentMins < 315;
+    toggleCard('cardEmbun', isEmbun);
+    if (isEmbun && !notifEmbunSent) {
+      sendNotif("🌌 SIAP-SIAP PENGEMBUNAN (05:00)", "Keluarkan burung untuk pengembunan subuh.");
+      start1MinVibration(); playAlarmChime(); notifEmbunSent = true;
+    } else if (!isEmbun) notifEmbunSent = false;
+
+    // 2. EF Pagi (05:15)
+    const isEFPagi = currentMins >= 315 && currentMins < 330;
+    toggleCard('cardEFPagi', isEFPagi);
+    if (isEFPagi && !notifEFPagiSent) {
+      sendNotif("BB EF Pagi (05:15)", isMandiDay ? "Beri 9 Jangkrik & MANDIKAN BURUNG!" : "Beri 9 Jangkrik Pagi.");
+      triggerShortVibration(); playAlarmChime(); notifEFPagiSent = true;
+    } else if (!isEFPagi) notifEFPagiSent = false;
+
+    // 3. Penjemuran (05:30)
+    const isJemur = currentMins >= 330 && currentMins < 360;
+    toggleCard('cardJemur', isJemur);
+    if (isJemur && !notifJemurSent) {
+      sendNotif("☀️ Penjemuran Pagi (05:30)", "Pindahkan burung ke lokasi penjemuran.");
+      triggerShortVibration(); playAlarmChime(); notifJemurSent = true;
+    } else if (!isJemur) notifJemurSent = false;
+
+    // 4. Krodong Pagi (06:00)
+    const isKrodongPagi = (currentMins >= 360 && currentMins < 375) && !isMandiDay;
+    toggleCard('cardKrodongPagi', isKrodongPagi);
+    if (isKrodongPagi && !notifKrodongPagiSent) {
+      sendNotif("🛡️ Pengerodongan Pagi (06:00)", "Krodong burung untuk pemasteran.");
+      triggerShortVibration(); playAlarmChime(); notifKrodongPagiSent = true;
+    } else if (!isKrodongPagi) notifKrodongPagiSent = false;
+
+    // 5. EF Sore (15:30)
+    const isEFSore = currentMins >= 930 && currentMins <= 990;
+    toggleCard('cardEFSore', isEFSore);
+    if (isEFSore && !notifEFSoreSent) {
+      sendNotif("🌇 EF Sore (15:30)", "Beri 9 Jangkrik sore & krodong.");
+      triggerShortVibration(); playAlarmChime(); notifEFSoreSent = true;
+    } else if (!isEFSore) notifEFSoreSent = false;
+
+    // 6. Masteran (Tgl 6)
+    const isMasteranDay = day === 6;
+    toggleCard('cardMasteran', isMasteranDay);
+    if (isMasteranDay && !notifMasteranSent) {
+      sendNotif("📻 Ganti Masteran Bulanan", "Tanggal 6: Waktunya ganti materi variasi masteran!");
+      triggerShortVibration(); playAlarmChime(); notifMasteranSent = true;
+    } else if (!isMasteranDay) notifMasteranSent = false;
+  }
+
+  function toggleCard(cardId, isActive) {
+    const card = document.getElementById(cardId);
+    if (isActive) card.classList.add('active-schedule');
+    else card.classList.remove('active-schedule');
+  }
+
+  function renderChecklist() {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const isMandiDay = (dayOfWeek === 3 || dayOfWeek === 5);
+
+    const items = [
+      "Pengembunan Subuh (05:00)",
+      "EF Pagi - 9 Ekor Jangkrik (05:15)",
+      isMandiDay ? "💧 Mandi Pagi (Jadwal Rabu/Jumat)" : "Cek Air Minum Clean",
+      "Penjemuran Pagi (05:30)",
+      isMandiDay ? "Angin-anginkan (Bulu Kering)" : "Pengerodongan Pagi (06:00)",
+      "EF Sore - 9 Ekor Jangkrik (15:30)",
+      "Bersihkan Karpet Sangkar",
+      "Pengerodongan Malam",
+      "🥣 Kroto Segar (1x Seminggu)"
+    ];
+
+    const group = document.getElementById('checklistGroup');
+    group.innerHTML = '';
+    const savedStates = JSON.parse(localStorage.getItem('masterChecklistState') || '{}');
+
+    items.forEach((item, idx) => {
+      const isChecked = savedStates[idx] || false;
+      const label = document.createElement('label');
+      label.className = `check-item ${isChecked ? 'done' : ''}`;
+      label.innerHTML = `<input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleCheckItem(${idx}, this)"><span>${item}</span>`;
+      group.appendChild(label);
+    });
+  }
+
+  function toggleCheckItem(idx, checkbox) {
+    const savedStates = JSON.parse(localStorage.getItem('masterChecklistState') || '{}');
+    savedStates[idx] = checkbox.checked;
+    localStorage.setItem('masterChecklistState', JSON.stringify(savedStates));
+    checkbox.parentElement.classList.toggle('done', checkbox.checked);
+  }
+
+  function resetChecklist() {
+    localStorage.removeItem('masterChecklistState');
+    renderChecklist();
+  }
+
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+
+  function loadAudio() {
+    document.getElementById('masteranPlayer').src = document.getElementById('audioSelect').value;
+  }
+
+  function saveNote() {
+    const input = document.getElementById('noteInput');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const notes = JSON.parse(localStorage.getItem('birdNotesMaster') || '[]');
+    const now = new Date();
+    const dateStr = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    
+    notes.unshift({ date: dateStr, text: text });
+    localStorage.setItem('birdNotesMaster', JSON.stringify(notes));
+    input.value = '';
+    renderNotes();
+  }
+
+  function renderNotes() {
+    const list = document.getElementById('logList');
+    const notes = JSON.parse(localStorage.getItem('birdNotesMaster') || '[]');
+    list.innerHTML = notes.length === 0 ? '<div style="font-size:0.8rem; color:var(--muted)">Belum ada catatan.</div>' : '';
+    notes.forEach(note => {
+      const item = document.createElement('div');
+      item.className = 'log-item';
+      item.innerHTML = `<div class="log-date">${note.date}</div><div>${note.text}</div>`;
+      list.appendChild(item);
+    });
+  }
+
+  function requestNotifPermission() {
+    if ("Notification" in window) {
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          const btn = document.getElementById('btnNotif');
+          btn.innerText = "✅ Notifikasi Aktif";
+          btn.disabled = true;
+          sendNotif("Rawatan Burung Pro", "Notifikasi PWA Berhasil Diaktifkan!");
+        }
+      });
+    }
+  }
+
+  function testAlarmAndVibrate() {
+    start1MinVibration();
+    playAlarmChime();
+    sendNotif("📳 Tes Getar 1 Menit & Alarm", "Notifikasi & alarm berfungsi!");
+  }
+
+  function sendNotif(title, body) {
+    if ("Notification" in window && Notification.permission === "granted") {
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'SHOW_NOTIF', title: title, body: body });
+      } else {
+        new Notification(title, { body: body, icon: 'https://cdn-icons-png.flaticon.com/512/3069/3069172.png' });
+      }
+    }
+  }
+
+  window.onload = function() {
+    renderChecklist();
+    renderNotes();
+    loadAudio();
+    if ("Notification" in window && Notification.permission === "granted") {
+      const btn = document.getElementById('btnNotif');
+      btn.innerText = "✅ Notifikasi Aktif";
+      btn.disabled = true;
+    }
+    setInterval(updateClockAndSchedules, 1000);
+    updateClockAndSchedules();
+  };
+</script>
+</body>
+</html>
